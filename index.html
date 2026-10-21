@@ -3,23 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ندي | NADA - The Discovery</title>
+    <title>مملكة ندي | Nada's Kingdom</title>
     
+    <!-- مكتبات 3D والأنيميشن -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     
+    <!-- الخطوط -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&family=Syne:wght@700;800&family=Tajawal:wght@900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&family=Syne:wght@700;800&family=Tajawal:wght@900&family=Reem+Kufi:wght@700&display=swap" rel="stylesheet">
     
     <style>
         :root {
-            --bg: #020005;
+            --bg: #03000a;
             --purple: #9d4edd;
             --purple-glow: #e0aaff;
             --pink: #ff69b4;
             --pink-glow: #ffb6c1;
             --cyan: #00f0ff;
+            --gold: #ffd700;
             --red: #ff4d6d;
             --green: #00ff88;
         }
@@ -27,30 +30,21 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body, html {
-            width: 100%; height: 100dvh; overflow: hidden;
+            width: 100%; min-height: 100dvh; 
             background-color: var(--bg); font-family: 'Cairo', sans-serif;
-            touch-action: none; user-select: none; -webkit-tap-highlight-color: transparent;
+            color: #fff;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        /* ================= UI System Overlay ================= */
-        .system-ui {
-            position: absolute; inset: max(20px, env(safe-area-inset-top)) 20px max(20px, env(safe-area-inset-bottom)) 20px;
-            pointer-events: none; z-index: 5; display: flex; flex-direction: column; justify-content: space-between;
-        }
-        .sys-header, .sys-footer {
-            display: flex; justify-content: space-between; font-family: monospace;
-            font-size: 0.65rem; color: rgba(224, 170, 255, 0.4); letter-spacing: 1px;
-        }
-        .sys-status { display: flex; align-items: center; gap: 5px; }
-        .sys-dot { width: 6px; height: 6px; background: var(--pink); border-radius: 50%; box-shadow: 0 0 10px var(--pink); animation: pulse 2s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        body.locked { overflow: hidden; height: 100vh; }
 
         /* ================= الخلفية 3D ================= */
-        #canvas-container { position: fixed; inset: 0; z-index: 0; }
+        #canvas-container { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
 
         /* ================= شاشة المقدمة (Intro) ================= */
         #intro-wrapper {
-            position: absolute; inset: 0; z-index: 10;
+            position: fixed; inset: 0; z-index: 10;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             padding-bottom: 15vh;
         }
@@ -91,106 +85,213 @@
         .typing-dots span:nth-child(2) { animation-delay: -0.16s; }
         @keyframes bounce { 0%, 80%, 100% { transform: scale(0); opacity: 0.3; } 40% { transform: scale(1); opacity: 1; box-shadow: 0 0 10px var(--purple); } }
 
-        /* ================= شاشة تسجيل الدخول (بناتي) ================= */
+        /* ================= شاشة تسجيل الدخول ================= */
         #login-wrapper {
-            position: absolute; inset: 0; z-index: 30; display: none; opacity: 0;
+            position: fixed; inset: 0; z-index: 30; display: none; opacity: 0;
             flex-direction: column; align-items: center; justify-content: center;
             background: radial-gradient(circle at center, rgba(2, 0, 5, 0.4) 0%, rgba(2, 0, 5, 0.85) 100%);
             backdrop-filter: blur(12px);
         }
 
-        /* الحاجات البناتي في الخلفية */
         .girly-bg { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 1; }
-        .girly-item { 
-            position: absolute; bottom: -10vh; 
-            animation: floatGirly linear infinite; 
-            filter: drop-shadow(0 0 10px rgba(255,105,180,0.4));
-        }
-        @keyframes floatGirly { 
-            0% { transform: translateY(0) rotate(0deg) scale(0.8); opacity: 0; } 
-            10% { opacity: 0.8; } 
-            90% { opacity: 0.8; } 
-            100% { transform: translateY(-120vh) rotate(360deg) scale(1.2); opacity: 0; } 
+        .girly-item { position: absolute; bottom: -10vh; animation: floatGirly linear infinite; filter: drop-shadow(0 0 10px rgba(255,105,180,0.4)); }
+        @keyframes floatGirly { 0% { transform: translateY(0) rotate(0deg) scale(0.8); opacity: 0; } 10% { opacity: 0.8; } 90% { opacity: 0.8; } 100% { transform: translateY(-120vh) rotate(360deg) scale(1.2); opacity: 0; } }
+
+        .login-box-container {
+            position: relative; width: 90%; max-width: 380px; z-index: 10;
+            filter: drop-shadow(0 0 15px rgba(255, 105, 180, 0.3)); transition: transform 0.3s ease;
         }
 
+        .login-box-wrapper {
+            position: relative; width: 100%; border-radius: 32px; padding: 3px; overflow: hidden;
+            transform: perspective(1000px) rotateX(2deg); background: rgba(255, 255, 255, 0.05);
+        }
+
+        .login-glow {
+            position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: conic-gradient(transparent 70%, var(--purple-glow) 85%, var(--pink) 100%, transparent 100%);
+            animation: spinGlow 4s linear infinite; z-index: 1;
+        }
+        @keyframes spinGlow { 100% { transform: rotate(360deg); } }
+
         .login-box {
-            width: 90%; max-width: 380px;
-            background: rgba(30, 10, 40, 0.6);
-            border: 1px solid rgba(255, 105, 180, 0.4);
-            border-radius: 30px;
-            padding: 40px 30px;
-            position: relative;
-            z-index: 10;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), inset 0 0 30px rgba(255, 105, 180, 0.15);
-            text-align: center;
+            position: relative; z-index: 2; width: 100%; background: #0d0414;
+            border-radius: 29px; padding: 40px 30px; text-align: center; overflow: hidden;
         }
 
         .login-icon { font-size: 3rem; margin-bottom: 15px; display: inline-block; animation: pulseHeart 2s infinite; }
         @keyframes pulseHeart { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); filter: drop-shadow(0 0 15px var(--pink)); } }
-
-        .login-title {
-            font-family: 'Tajawal', sans-serif;
-            color: var(--pink-glow);
-            font-size: 1.6rem;
-            font-weight: 700;
-            margin-bottom: 5px;
-            text-shadow: 0 0 15px rgba(255, 105, 180, 0.5);
-        }
-
+        .login-title { font-family: 'Tajawal', sans-serif; color: var(--pink-glow); font-size: 1.6rem; font-weight: 700; margin-bottom: 5px; text-shadow: 0 0 15px rgba(255, 105, 180, 0.5); }
         .login-subtitle { font-size: 0.85rem; color: rgba(255, 255, 255, 0.6); margin-bottom: 30px; }
-
         .input-group { position: relative; margin-bottom: 25px; }
         .input-group input {
-            width: 100%; background: rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(255, 105, 180, 0.4);
-            border-radius: 50px;
-            padding: 16px 20px;
-            color: var(--pink-glow); font-family: 'Cairo', sans-serif; font-size: 1rem;
-            outline: none; transition: 0.4s;
-            text-align: center; letter-spacing: 2px;
+            width: 100%; background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 105, 180, 0.4);
+            border-radius: 50px; padding: 16px 20px; color: var(--pink-glow); font-family: 'Cairo', sans-serif; font-size: 1rem;
+            outline: none; transition: 0.4s; text-align: center; letter-spacing: 2px;
         }
-        .input-group input::placeholder { color: rgba(255, 182, 193, 0.4); font-size: 0.9rem; letter-spacing: normal; }
-        .input-group input:focus { border-color: var(--pink); box-shadow: 0 0 25px rgba(255, 105, 180, 0.3); background: rgba(30, 10, 40, 0.8); }
-
+        .input-group input:focus { border-color: var(--pink); box-shadow: 0 0 25px rgba(255, 105, 180, 0.3); background: rgba(30, 10, 40, 0.9); }
         .btn-login {
             width: 100%; padding: 16px; border: none; border-radius: 50px;
-            background: linear-gradient(135deg, #ff69b4, #9d4edd);
-            color: #fff; font-weight: 700; font-family: 'Cairo', sans-serif;
-            font-size: 1.1rem; cursor: pointer; transition: 0.3s;
-            box-shadow: 0 10px 20px rgba(255, 105, 180, 0.3);
-            display: flex; justify-content: center; align-items: center; gap: 10px;
+            background: linear-gradient(135deg, #ff69b4, #9d4edd); color: #fff; font-weight: 700; font-family: 'Cairo', sans-serif;
+            font-size: 1.1rem; cursor: pointer; transition: 0.3s; box-shadow: 0 10px 20px rgba(255, 105, 180, 0.3);
         }
-        .btn-login:active { transform: scale(0.96); }
-        .btn-login:disabled { background: #555; cursor: not-allowed; box-shadow: none; opacity: 0.7; }
-
-        /* رسالة الخطأ أو النجاح */
-        .msg-text {
-            font-size: 1.1rem; font-weight: 700;
-            margin-top: 20px; height: 25px; opacity: 0; transition: 0.3s;
-            text-shadow: 0 0 10px rgba(0,0,0,0.5);
-        }
+        .btn-login:disabled { background: #444; cursor: not-allowed; box-shadow: none; opacity: 0.8; }
+        .msg-text { font-size: 1.1rem; font-weight: 700; margin-top: 20px; min-height: 30px; opacity: 0; transition: 0.3s; text-shadow: 0 0 10px rgba(0,0,0,0.5); }
         .msg-text.show { opacity: 1; animation: popMsg 0.4s ease; }
         @keyframes popMsg { 0% { transform: scale(0.8); } 100% { transform: scale(1); } }
-
         .shake { animation: shake 0.4s ease-in-out; }
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 50% { transform: translateX(8px); } 75% { transform: translateX(-8px); } }
+
+        /* ================= مملكة ندي (The Kingdom) ================= */
+        #kingdom-wrapper {
+            position: relative; z-index: 40; display: none; opacity: 0;
+            min-height: 100dvh; padding: 40px 20px 120px;
+            overflow-y: auto; overflow-x: hidden;
+        }
+
+        /* شاشة الترحيب السينمائية */
+        .hero-section {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            min-height: 80vh; text-align: center;
+        }
+
+        .hero-title {
+            font-family: 'Reem Kufi', sans-serif;
+            font-size: clamp(3rem, 10vw, 6rem);
+            background: linear-gradient(135deg, #fff, var(--gold), var(--pink-glow));
+            -webkit-background-clip: text; background-clip: text; color: transparent;
+            text-shadow: 0 0 40px rgba(255, 215, 0, 0.3);
+            margin-bottom: 20px;
+            animation: float3D 6s ease-in-out infinite;
+        }
+
+        .hero-subtitle {
+            font-size: clamp(1rem, 4vw, 1.5rem);
+            color: var(--cyan);
+            letter-spacing: 2px;
+            font-family: monospace;
+            margin-bottom: 40px;
+            text-shadow: 0 0 10px var(--cyan);
+        }
+
+        .scroll-down {
+            font-size: 2rem; color: var(--pink);
+            animation: bounceDown 2s infinite;
+        }
+        @keyframes bounceDown { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(15px); } }
+
+        /* الكروت الزجاجية */
+        .kingdom-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px; max-width: 1000px; margin: 0 auto;
+        }
+
+        .glass-card {
+            background: rgba(20, 10, 35, 0.4);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(157, 78, 221, 0.3);
+            border-radius: 24px; padding: 30px 20px;
+            text-align: center; transition: 0.5s cubic-bezier(0.3, 0.9, 0.4, 1.1);
+            position: relative; overflow: hidden;
+            transform-style: preserve-3d;
+        }
+
+        .glass-card::before {
+            content: ''; position: absolute; inset: 0;
+            background: radial-gradient(circle at top left, rgba(255, 105, 180, 0.15), transparent 50%);
+            opacity: 0; transition: 0.5s;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            border-color: rgba(255, 105, 180, 0.6);
+            box-shadow: 0 20px 50px rgba(157, 78, 221, 0.3);
+        }
+
+        .glass-card:hover::before { opacity: 1; }
+
+        .card-icon { font-size: 3rem; margin-bottom: 15px; filter: drop-shadow(0 0 15px var(--pink)); }
+        .card-title { font-family: 'Tajawal', sans-serif; font-size: 1.5rem; color: var(--gold); margin-bottom: 10px; }
+        .card-text { font-size: 0.95rem; color: #ccc; line-height: 1.6; }
+
+        /* الفوتر */
+        .kingdom-footer {
+            text-align: center; margin-top: 60px; padding-bottom: 30px;
+            font-size: 0.9rem; color: rgba(255, 255, 255, 0.4);
+            font-family: monospace;
+        }
+
+        /* ================= شريط الموسيقى العائم الجديد ================= */
+        .music-player {
+            position: fixed; bottom: max(20px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%);
+            background: rgba(15, 5, 30, 0.7); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(157, 78, 221, 0.5); border-radius: 50px;
+            padding: 10px 20px 10px 15px; display: none; align-items: center; gap: 15px; z-index: 50;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(157, 78, 221, 0.2);
+            width: 90%; max-width: 350px;
+        }
+
+        /* الأسطوانة */
+        .vinyl-small {
+            width: 45px; height: 45px; border-radius: 50%; flex-shrink: 0;
+            background: repeating-radial-gradient(circle at center, #1a0510 0px, #1a0510 3px, #2a0a1a 3px, #2a0a1a 6px);
+            display: flex; justify-content: center; align-items: center;
+            animation: spin 4s linear infinite;
+            animation-play-state: paused; /* متوقفة في الأول */
+            border: 2px solid rgba(255,105,180,0.3);
+        }
+        .vinyl-center-small { width: 14px; height: 14px; background: var(--pink); border-radius: 50%; box-shadow: 0 0 10px var(--pink); }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* بيانات الأغنية */
+        .music-info {
+            flex: 1; display: flex; flex-direction: column; gap: 4px; overflow: hidden;
+        }
+        .song-title {
+            font-size: 0.85rem; color: var(--pink-glow); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            text-shadow: 0 0 10px rgba(255,105,180,0.5);
+        }
+        
+        /* شريط التقدم */
+        .progress-container {
+            display: flex; align-items: center; gap: 8px;
+        }
+        .time-display {
+            font-size: 0.65rem; color: rgba(255,255,255,0.5); font-family: monospace;
+        }
+        
+        /* الـ Range Input (شريط التقدم) */
+        input[type=range] {
+            -webkit-appearance: none; width: 100%; background: transparent; cursor: pointer; height: 15px;
+        }
+        input[type=range]:focus { outline: none; }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%; height: 4px; cursor: pointer; background: rgba(255,255,255,0.1); border-radius: 2px;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            height: 12px; width: 12px; border-radius: 50%; background: var(--pink);
+            cursor: pointer; -webkit-appearance: none; margin-top: -4px;
+            box-shadow: 0 0 10px var(--pink); transition: transform 0.1s;
+        }
+        input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+        /* زرار التشغيل */
+        .play-btn {
+            background: linear-gradient(135deg, var(--pink), var(--purple));
+            border: none; width: 40px; height: 40px; border-radius: 50%;
+            display: flex; justify-content: center; align-items: center; cursor: pointer;
+            box-shadow: 0 0 15px rgba(255,105,180,0.4); flex-shrink: 0;
+            transition: transform 0.2s;
+        }
+        .play-btn:active { transform: scale(0.9); }
+        .play-btn svg { width: 18px; height: 18px; fill: white; margin-left: 2px; } /* margin عشان شكل المثلث */
+        .play-btn.playing svg { margin-left: 0; }
         
     </style>
 </head>
-<body>
+<body class="locked">
 
-    <!-- UI الخلفي -->
-    <div class="system-ui">
-        <div class="sys-header">
-            <div class="sys-status"><div class="sys-dot"></div> SYSTEM ONLINE</div>
-            <div>SECURED</div>
-        </div>
-        <div class="sys-footer">
-            <div>DISCOVERY PROTOCOL v2.0</div>
-        </div>
-    </div>
-
-    <!-- الخلفية السينمائية 3D -->
+    <!-- الخلفية 3D -->
     <div id="canvas-container"></div>
 
     <!-- ================= 1. شاشة المقدمة ================= -->
@@ -201,7 +302,6 @@
                 <span></span><span></span><span></span><span></span>
             </div>
         </div>
-
         <div class="nada-badge-container" id="nadaBadge">
             <div class="crown" id="crownIcon">👑</div>
             <div class="nada-box">
@@ -212,7 +312,7 @@
         </div>
     </div>
 
-    <!-- AI Chat (بتاع المقدمة) -->
+    <!-- AI Chat -->
     <div class="ai-container" id="aiContainer">
         <div class="ai-box">
             <div class="ai-avatar">
@@ -227,29 +327,109 @@
 
     <!-- ================= 2. شاشة تسجيل الدخول ================= -->
     <div id="login-wrapper">
-        <!-- الحاجات البناتي الطايرة -->
         <div class="girly-bg" id="girlyBg"></div>
+        <div class="login-box-container" id="loginContainer">
+            <div class="login-box-wrapper" id="loginBoxWrapper">
+                <div class="login-glow"></div>
+                <div class="login-box" id="loginBox">
+                    <div class="login-icon">🎀</div>
+                    <h2 class="login-title">اكتبي الباسورد يقلب بابا</h2>
+                    <p class="login-subtitle">مملكة ندي</p>
+                    <div class="input-group">
+                        <input type="password" id="passwordInput" placeholder="الباسورد السري هنا.." autocomplete="off">
+                    </div>
+                    <button class="btn-login" id="loginBtn" onclick="verifyPassword()">الدخول الي مملكتك يندي 💖</button>
+                    <p class="msg-text" id="msgText"></p>
+                </div>
+            </div>
+        </div>
+    </div>
 
-        <div class="login-box" id="loginBox">
-            <div class="login-icon">🎀</div>
-            <h2 class="login-title">اكتبي الباسورد يقلب بابا</h2>
-            <p class="login-subtitle">عشان تفتحي سرنا الصغير 💗</p>
+    <!-- ================= 3. مملكة ندي (الصفحة الجديدة) ================= -->
+    <div id="kingdom-wrapper">
+        
+        <!-- شاشة الترحيب -->
+        <section class="hero-section">
+            <h1 class="hero-title" id="kingdomTitle">أهلاً بيكي في مملكتك</h1>
+            <p class="hero-subtitle" id="kingdomSubtitle">Welcome to Nada's Kingdom</p>
+            <div class="scroll-down">↓</div>
+        </section>
 
-            <div class="input-group">
-                <input type="password" id="passwordInput" placeholder="الباسورد السري هنا.." autocomplete="off">
+        <!-- شبكة الذكريات والكروت -->
+        <section class="kingdom-grid" id="kingdomCards">
+            
+            <div class="glass-card">
+                <div class="card-icon">👑</div>
+                <h3 class="card-title">أنتي الملكة</h3>
+                <p class="card-text">في المملكة دي، إنتي الحاكمة، وأنا بس مجرد تابع بيحبك وبيسعد لما يشوفك مبسوطة.</p>
             </div>
 
-            <button class="btn-login" id="loginBtn" onclick="verifyPassword()">
-                الدخول الي مملكتك يندي 💖
-            </button>
+            <div class="glass-card">
+                <div class="card-icon">💍</div>
+                <h3 class="card-title">وعد مني</h3>
+                <p class="card-text">أوعدك أفضل جنبك في كل خطوة، وأخليكي أسعد بنت في الكون، مهما الدنيا لفت بينا.</p>
+            </div>
 
-            <p class="msg-text" id="msgText"></p>
+            <div class="glass-card">
+                <div class="card-icon">✨</div>
+                <h3 class="card-title">سر الـ AI</h3>
+                <p class="card-text">أنا برمجت الروبوت ده مخصوص عشانك، عشان يفضل يفتكرك كل يوم بمدى حبي ليكي.</p>
+            </div>
+
+            <div class="glass-card">
+                <div class="card-icon">🌌</div>
+                <h3 class="card-title">عالمنا الخاص</h3>
+                <p class="card-text">بعيد عن أي عين، المكان ده إحنا الاتنين بس، نضحك فيه ونعيش أحلى لحظات.</p>
+            </div>
+
+            <div class="glass-card">
+                <div class="card-icon">🌸</div>
+                <h3 class="card-title">ضحكتك</h3>
+                <p class="card-text">هي السر اللي بيمسح أي تعب في يومي، ضحكتك دي هي أجمل موسيقى ممكن أسمعها.</p>
+            </div>
+
+            <div class="glass-card">
+                <div class="card-icon">♾️</div>
+                <h3 class="card-title">إلى الأبد</h3>
+                <p class="card-text">مش بس النهاردة، أنا بحبك أمس، بحبك دلوقتي، وبحبك بكرا وكل يوم جاي.</p>
+            </div>
+
+        </section>
+
+        <footer class="kingdom-footer">
+            مبرمج بكل حب بواسطة يوسف.. عشان ندي 💖
+        </footer>
+    </div>
+
+    <!-- ================= 4. شريط الموسيقى العائم ================= -->
+    <!-- ضفت الأغنية هنا -->
+    <audio id="bgMusic" src="amr-diabb.mp3" loop></audio>
+    
+    <div class="music-player" id="musicBar">
+        <div class="vinyl-small" id="vinylIcon">
+            <div class="vinyl-center-small"></div>
         </div>
+        
+        <div class="music-info">
+            <div class="song-title">Amr Diab - Nada's Song</div>
+            <div class="progress-container">
+                <span class="time-display" id="currTime">0:00</span>
+                <input type="range" id="seekBar" value="0" min="0" max="100" step="0.1">
+                <span class="time-display" id="totalTime">0:00</span>
+            </div>
+        </div>
+
+        <button class="play-btn" id="playPauseBtn" onclick="togglePlay()">
+            <!-- أيقونة التشغيل (مثلث) -->
+            <svg id="iconPlay" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            <!-- أيقونة الإيقاف (مربعين) -->
+            <svg id="iconPause" viewBox="0 0 24 24" style="display: none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+        </button>
     </div>
 
     <script>
         // ==========================================
-        // 1. إعداد الخلفية الـ 3D (النجوم)
+        // 1. إعداد الخلفية الـ 3D (نفس النجوم الأصلية)
         // ==========================================
         const container = document.getElementById('canvas-container');
         const scene = new THREE.Scene();
@@ -265,7 +445,7 @@
         const posArray = new Float32Array(particlesCount * 3);
         const colorsArray = new Float32Array(particlesCount * 3);
 
-        const color1 = new THREE.Color(0x9d4edd);
+        const color1 = new THREE.Color(0x9d4edd); 
         const color2 = new THREE.Color(0x00f0ff); 
 
         for(let i = 0; i < particlesCount * 3; i++) {
@@ -293,7 +473,6 @@
 
         const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
         scene.add(particlesMesh);
-
         camera.position.z = 5;
 
         let mouseX = 0, mouseY = 0;
@@ -364,7 +543,7 @@
             });
         }
 
-        const aiMessage = "استعدي يا ندي.. في سر مستنيكي ورا البوابة ✨";
+        const aiMessage = "اهلا بيكي ف موقعك يندي يوسف برمجني ليكي مخصوص وبيقولك بحبك يبنوتي اوي✨";
         let j = 0;
         function typeAIMessage() {
             aiTextEl.innerHTML = ""; 
@@ -385,14 +564,13 @@
         // ==========================================
         function goToLogin() {
             const tlOut = gsap.timeline();
-            
             tlOut.to(".ai-container", { opacity: 0, y: 20, duration: 0.5 })
                  .to("#intro-wrapper", { opacity: 0, scale: 0.9, duration: 0.8 }, "-=0.3")
                  .to(".system-ui", { opacity: 0.2, duration: 0.8 }, "-=0.8")
                  .set("#intro-wrapper", { display: "none" })
                  .set("#login-wrapper", { display: "flex" })
                  .to("#login-wrapper", { opacity: 1, duration: 1, onComplete: () => {
-                     gsap.from("#loginBox", { y: 50, opacity: 0, duration: 1, ease: "back.out(1.5)" });
+                     gsap.from(".login-box-container", { y: 50, opacity: 0, duration: 1, ease: "back.out(1.5)" });
                  }});
         }
 
@@ -408,26 +586,23 @@
                 item.className = 'girly-item';
                 item.innerHTML = girlyEmojis[Math.floor(Math.random() * girlyEmojis.length)];
                 item.style.left = Math.random() * 100 + 'vw';
-                item.style.fontSize = (Math.random() * 20 + 15) + 'px'; // مقاسات مختلفة
-                item.style.animationDuration = (Math.random() * 4 + 5) + 's'; // بين 5 و 9 ثواني
+                item.style.fontSize = (Math.random() * 20 + 15) + 'px'; 
+                item.style.animationDuration = (Math.random() * 4 + 5) + 's'; 
                 girlyBg.appendChild(item);
-                
                 setTimeout(() => { item.remove(); }, 9000);
             }
-        }, 300); // بيطلع عنصر كل 0.3 ثانية
+        }, 300); 
 
         // ==========================================
-        // 5. التحقق من الباسورد
+        // 5. التحقق من الباسورد والدخول للمملكة
         // ==========================================
         const ENCODED_PASS = "bmFkYW1yYXR5b3Vzc2VmMjAwOA=="; 
-        
         const loginBox = document.getElementById("loginBox");
         const passInput = document.getElementById("passwordInput");
         const loginBtn = document.getElementById("loginBtn");
         const msgText = document.getElementById("msgText");
         
-        let failCount = 0;
-        let isLocked = false;
+        let failCount = 0, isLocked = false, msgTimeout; 
 
         passInput.addEventListener("keypress", function(event) {
             if (event.key === "Enter" && !isLocked) {
@@ -438,53 +613,54 @@
 
         function verifyPassword() {
             if (isLocked) return;
-
-            const inputVal = passInput.value;
+            const inputVal = passInput.value.trim(); 
+            
             if (inputVal === "") {
-                showMsg("اكتبي الباسورد الأول يا قلبي 🥺", "var(--red)");
+                showMsg("اكتبي الباسورد ي ام عيال يوسف 👑", "var(--red)");
                 return;
             }
 
-            if (btoa(inputVal) === ENCODED_PASS) {
-                // --- الباسورد صح ---
-                loginBtn.innerHTML = "جاري الدخول...";
+            let isMatch = false;
+            try { isMatch = (btoa(inputVal) === ENCODED_PASS); } catch (e) { isMatch = false; }
+
+            if (isMatch) {
+                clearTimeout(msgTimeout);
+                loginBtn.innerHTML = "جاري فتح المملكة...";
                 loginBtn.style.background = "var(--green)";
                 loginBtn.style.color = "#000";
                 loginBtn.disabled = true;
+                passInput.disabled = true;
                 
-                // إظهار رسالة النجاح بالأخضر
-                showMsg("صح يقلب بابا 💖", "var(--green)");
+                showMsg("صح يمرات يوسف 👑", "var(--green)");
                 
+                // الانتقال للمملكة
                 setTimeout(() => {
-                    // هنا الانتقال للصفحة الجديدة
-                    alert("أهلاً بيكي في مملكتك يا ندي! 👑✨");
+                    gsap.to(".login-box-container", { 
+                        opacity: 0, scale: 0.8, duration: 0.8, onComplete: enterKingdom
+                    });
                 }, 1500);
 
             } else {
-                // --- الباسورد غلط ---
                 failCount++;
                 loginBox.classList.add("shake");
                 passInput.value = "";
-                
                 setTimeout(() => { loginBox.classList.remove("shake"); }, 500);
 
                 if (failCount >= 3) {
                     startLockout();
                 } else {
-                    // إظهار رسالة الخطأ بالأحمر
-                    showMsg("غلط يمرات يوسف 🥺", "var(--red)");
+                    showMsg("غلط يمرات يوسف 👑", "var(--red)");
                 }
             }
         }
 
         function showMsg(text, color) {
+            clearTimeout(msgTimeout);
             msgText.innerHTML = text;
             msgText.style.color = color;
             msgText.classList.add("show");
-            
-            // إخفاء الرسالة بعد 3 ثواني (لو مش في حالة حظر)
             if (!isLocked) {
-                setTimeout(() => { msgText.classList.remove("show"); }, 3000);
+                msgTimeout = setTimeout(() => { msgText.classList.remove("show"); }, 3000);
             }
         }
 
@@ -492,28 +668,159 @@
             isLocked = true;
             loginBtn.disabled = true;
             passInput.disabled = true;
-            loginBtn.style.background = "#555";
-            loginBtn.innerHTML = `استني 30 ثانية يا قمر 🥺`;
-            
+            loginBtn.style.background = "#444";
+            loginBtn.style.fontSize = "0.95rem"; 
+            loginBtn.innerHTML = `استني 30 ثانية يقلب بابا`;
             showMsg("محاولات كتير غلط، استني شوية!", "var(--red)");
 
             let timeLeft = 30;
             const timer = setInterval(() => {
                 timeLeft--;
-                loginBtn.innerHTML = `استني ${timeLeft} ثانية يا قمر 🥺`;
-                
+                loginBtn.innerHTML = `استني ${timeLeft} ثانية يقلب بابا`;
                 if (timeLeft <= 0) {
                     clearInterval(timer);
-                    isLocked = false;
-                    failCount = 0;
-                    loginBtn.disabled = false;
-                    passInput.disabled = false;
+                    isLocked = false; failCount = 0;
+                    loginBtn.disabled = false; passInput.disabled = false;
+                    loginBtn.style.fontSize = "1.1rem"; 
                     loginBtn.innerHTML = "الدخول الي مملكتك يندي 💖";
                     loginBtn.style.background = "linear-gradient(135deg, #ff69b4, #9d4edd)";
                     msgText.classList.remove("show");
                     passInput.focus();
                 }
             }, 1000);
+        }
+
+        // ==========================================
+        // 6. دخول المملكة والأغنية
+        // ==========================================
+        const audio = document.getElementById('bgMusic');
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const iconPlay = document.getElementById('iconPlay');
+        const iconPause = document.getElementById('iconPause');
+        const vinylIcon = document.getElementById('vinylIcon');
+        const seekBar = document.getElementById('seekBar');
+        const currTimeEl = document.getElementById('currTime');
+        const totalTimeEl = document.getElementById('totalTime');
+
+        function enterKingdom() {
+            document.getElementById('login-wrapper').style.display = 'none';
+            document.body.classList.remove('locked');
+            
+            const kingdom = document.getElementById('kingdom-wrapper');
+            kingdom.style.display = 'block';
+            
+            // إظهار شريط الموسيقى
+            document.getElementById('musicBar').style.display = 'flex';
+
+            // تشغيل الأغنية تلقائياً
+            audio.volume = 0.6; // صوت متوسط
+            audio.play().then(() => {
+                // لو نجح التشغيل
+                iconPlay.style.display = 'none';
+                iconPause.style.display = 'block';
+                playPauseBtn.classList.add('playing');
+                vinylIcon.style.animationPlayState = 'running';
+            }).catch((error) => {
+                console.log("المتصفح منع التشغيل التلقائي، محتاج دوسة من المستخدم:", error);
+                // في حالة إن المتصفح رفض يشغل الصوت أوتوماتيك، الزرار هيفضل على وضع الإيقاف
+            });
+
+            // أنيميشن دخول المملكة
+            gsap.to(kingdom, { 
+                opacity: 1, 
+                duration: 1.5, 
+                onComplete: () => {
+                    gsap.from("#musicBar", { y: 50, opacity: 0, duration: 1, ease: "back.out(1.5)" });
+                    startKingdomAnimation();
+                }
+            });
+        }
+
+        // دوال التحكم في الأغنية
+        function togglePlay() {
+            if (audio.paused) {
+                audio.play();
+                iconPlay.style.display = 'none';
+                iconPause.style.display = 'block';
+                playPauseBtn.classList.add('playing');
+                vinylIcon.style.animationPlayState = 'running';
+            } else {
+                audio.pause();
+                iconPlay.style.display = 'block';
+                iconPause.style.display = 'none';
+                playPauseBtn.classList.remove('playing');
+                vinylIcon.style.animationPlayState = 'paused';
+            }
+        }
+
+        // تحديث شريط التقدم والوقت
+        audio.addEventListener('timeupdate', () => {
+            if (!isNaN(audio.duration)) {
+                const percent = (audio.currentTime / audio.duration) * 100;
+                seekBar.value = percent;
+                
+                // تنسيق الوقت
+                currTimeEl.innerText = formatTime(audio.currentTime);
+                totalTimeEl.innerText = formatTime(audio.duration);
+            }
+        });
+
+        // تقديم وتأخير الأغنية لما تسحب الشريط
+        seekBar.addEventListener('input', () => {
+            if (!isNaN(audio.duration)) {
+                const seekTime = (seekBar.value / 100) * audio.duration;
+                audio.currentTime = seekTime;
+            }
+        });
+
+        // دالة تنسيق الوقت (دقيقة:ثانية)
+        function formatTime(seconds) {
+            const min = Math.floor(seconds / 60);
+            const sec = Math.floor(seconds % 60);
+            return `${min}:${sec < 10 ? '0' : ''}${sec}`;
+        }
+
+        // ==========================================
+        // 7. أنيميشن مملكة ندي
+        // ==========================================
+        function startKingdomAnimation() {
+            const title = "أهلاً بيكي في مملكتك يا ندي";
+            const titleEl = document.getElementById('kingdomTitle');
+            titleEl.innerHTML = "";
+            let k = 0;
+            
+            function typeTitle() {
+                if (k < title.length) {
+                    titleEl.innerHTML += title.charAt(k);
+                    k++;
+                    setTimeout(typeTitle, 100);
+                } else {
+                    gsap.to("#kingdomSubtitle", { opacity: 1, y: 0, duration: 1 });
+                }
+            }
+            setTimeout(typeTitle, 500);
+
+            const cards = document.querySelectorAll('.glass-card');
+            
+            cards.forEach((card, index) => {
+                card.addEventListener('mousemove', (e) => {
+                    const rect = card.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    
+                    const centerX = rect.width / 2;
+                    const centerY = rect.height / 2;
+                    
+                    const rotateX = ((y - centerY) / centerY) * -10;
+                    const rotateY = ((x - centerX) / centerX) * 10;
+                    
+                    card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.02)`;
+                });
+
+                card.addEventListener('mouseleave', () => {
+                    card.style.transform = `perspective(1000px) rotateX(0) rotateY(0) scale(1)`;
+                });
+            });
         }
 
     </script>
